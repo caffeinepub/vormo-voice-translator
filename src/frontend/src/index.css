@@ -1,0 +1,114 @@
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/BricolageGrotesque[opsz,wdth,wght].woff2")
+    format("woff2");
+  font-display: swap;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: "Outfit";
+  src: url("/assets/fonts/Outfit[wght].woff2") format("woff2");
+  font-display: swap;
+  font-weight: 100 900;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0.11 0.008 200;
+    --foreground: 0.95 0.01 200;
+    --card: 0.15 0.012 210;
+    --card-foreground: 0.92 0.01 210;
+    --popover: 0.15 0.012 210;
+    --popover-foreground: 0.92 0.01 210;
+    --primary: 0.72 0.19 195;
+    --primary-foreground: 0.08 0.01 200;
+    --secondary: 0.18 0.015 210;
+    --secondary-foreground: 0.75 0.02 200;
+    --muted: 0.18 0.01 210;
+    --muted-foreground: 0.5 0.015 210;
+    --accent: 0.65 0.22 155;
+    --accent-foreground: 0.08 0.01 200;
+    --destructive: 0.6 0.22 25;
+    --destructive-foreground: 0.95 0.01 25;
+    --border: 0.22 0.015 210;
+    --input: 0.22 0.015 210;
+    --ring: 0.72 0.19 195;
+    --radius: 1rem;
+    --chart-1: 0.72 0.19 195;
+    --chart-2: 0.65 0.22 155;
+    --chart-3: 0.75 0.15 280;
+    --chart-4: 0.6 0.22 25;
+    --chart-5: 0.72 0.18 110;
+    --sidebar: 0.13 0.01 210;
+    --sidebar-foreground: 0.92 0.01 210;
+    --sidebar-primary: 0.72 0.19 195;
+    --sidebar-primary-foreground: 0.08 0.01 200;
+    --sidebar-accent: 0.18 0.015 210;
+    --sidebar-accent-foreground: 0.75 0.02 200;
+    --sidebar-border: 0.22 0.015 210;
+    --sidebar-ring: 0.72 0.19 195;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Outfit", sans-serif;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-ring-2 {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes waveform {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.waveform-bar {
+  animation: waveform 0.7s ease-in-out infinite;
+}
+.waveform-bar:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.waveform-bar:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.waveform-bar:nth-child(4) {
+  animation-delay: 0.3s;
+}
+.waveform-bar:nth-child(5) {
+  animation-delay: 0.15s;
+}
