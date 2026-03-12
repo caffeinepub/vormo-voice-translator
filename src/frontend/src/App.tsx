@@ -295,12 +295,22 @@ export default function App() {
 
   // ── Speech & Translation ────────────────────────────────────────────────
 
-  const handleSpeak = () => {
+  const handleSpeak = async () => {
     if (!roomState || !actor) return;
 
     if (isListening) {
       recognitionRef.current?.stop();
       setIsListening(false);
+      return;
+    }
+
+    // Request mic permission explicitly first
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (_err) {
+      toast.error(
+        "Microphone access denied. Please allow mic in browser settings.",
+      );
       return;
     }
 
@@ -331,14 +341,11 @@ export default function App() {
     recognition.onresult = async (e: any) => {
       const spokenText = e.results[0][0].transcript;
       setIsTranslating(true);
-
       try {
         const from = isHindi ? "hi" : "zh";
         const to = isHindi ? "zh" : "hi";
         const translated = await translateText(spokenText, from, to);
         const direction: "hi-zh" | "zh-hi" = isHindi ? "hi-zh" : "zh-hi";
-
-        // Send to partner
         await actor.postMessage(
           roomState.roomCode,
           roomState.userId,
@@ -346,8 +353,6 @@ export default function App() {
           translated,
           direction,
         );
-
-        // Show in history
         setHistory((prev) => [
           ...prev,
           {
@@ -359,16 +364,17 @@ export default function App() {
             isReceived: false,
           },
         ]);
-
         toast.success("Translation sent!");
-      } catch (err) {
-        console.error(err);
+      } catch (_err) {
+        console.error(_err);
         toast.error("Translation failed.");
       } finally {
         setIsTranslating(false);
       }
     };
 
+    // Show listening indicator immediately before start
+    setIsListening(true);
     recognition.start();
   };
 
