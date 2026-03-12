@@ -1,33 +1,25 @@
-# Vormo Voice Translator - Remote Two-Device Mode
+# Vormo Voice Translator
 
 ## Current State
-Single-device pass-the-phone translator. Hindi ↔ Chinese voice translation, local only. Backend is empty (actor {}).
+App has had repeated backend compilation errors preventing deployment. Remote mode room creation fails.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Motoko backend: room-based session management
-  - createRoom() → roomCode (6-char)
-  - joinRoom(code) → userId (A or B)
-  - postMessage(roomCode, userId, sourceText, translatedText, direction) 
-  - getMessages(roomCode, userId, afterTimestamp) → new messages for this user
-  - heartbeat(roomCode, userId) to keep session alive
-- Remote Mode UI:
-  - Landing screen: "Start New Room" or "Join Room" (enter code)
-  - Room screen: shows room code to share, connection status (waiting/connected)
-  - User A = Hindi speaker, User B = Chinese speaker (auto-assigned)
-  - Each user taps their mic button, speech is recognized, translated, posted to backend
-  - Both devices poll every 1.5s for new messages; when message arrives for this user, play TTS audio
-  - Live transcript shown on both sides
-- Keep existing single-device mode as fallback/local option
+- Clean Motoko backend with room creation, joining, and message polling
+- Two-phone remote mode: User A creates room, User B joins with same code
+- Speech recognition per user (Hindi or Chinese)
+- Translation via MyMemory API
+- TTS playback of received translation
 
 ### Modify
-- App.tsx: Add mode selection (Local vs Remote), remote room flow
-- backend.d.ts: Updated with new backend interface
+- Complete rewrite of backend to be minimal and error-free
+- Complete rewrite of frontend to be clean and simple
 
 ### Remove
-- "Pass the phone" prompt (in remote mode)
+- All previous broken backend code
+- Local/pass-the-phone mode complexity
 
 ## Implementation Plan
-1. Generate Motoko backend with room, message store, polling APIs
-2. Update frontend: room creation/join UI, polling hook, remote translation flow, connection status display
+1. Motoko backend: createRoom, joinRoom, sendMessage, getMessages - simple stable data structures
+2. React frontend: room code input, create/join, Hindi/Chinese speak buttons, translation display, TTS playback, polling for partner messages
