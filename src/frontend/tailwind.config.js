@@ -10,14 +10,12 @@ export default {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
       fontFamily: {
-        display: ["Bricolage Grotesque", "sans-serif"],
-        body: ["Outfit", "sans-serif"],
+        display: ["'Playfair Display'", "serif"],
+        body: ["Figtree", "sans-serif"],
       },
       colors: {
         border: "oklch(var(--border))",
@@ -77,9 +75,9 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        xs: "0 1px 2px 0 rgba(0,0,0,0.05)",
-        glow: "0 0 40px oklch(0.72 0.19 195 / 0.3), 0 0 80px oklch(0.72 0.19 195 / 0.15)",
-        "glow-sm": "0 0 20px oklch(0.72 0.19 195 / 0.4)",
+        "glow-gold": "0 0 30px oklch(0.76 0.16 65 / 0.4), 0 0 60px oklch(0.76 0.16 65 / 0.15)",
+        "glow-gold-sm": "0 0 14px oklch(0.76 0.16 65 / 0.5)",
+        card: "0 4px 20px oklch(0 0 0 / 0.5), 0 1px 4px oklch(0 0 0 / 0.3)",
       },
       keyframes: {
         "accordion-down": {
@@ -90,10 +88,15 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "fade-up": {
+          from: { opacity: "0", transform: "translateY(20px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-up": "fade-up 0.5s ease-out forwards",
       },
     },
   },

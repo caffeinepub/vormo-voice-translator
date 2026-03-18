@@ -1,726 +1,631 @@
+import RiyazPanel from "@/components/RiyazPanel";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Toaster } from "@/components/ui/sonner";
-import {
-  Check,
-  Copy,
-  Loader2,
-  LogOut,
-  Mic,
-  MicOff,
-  Volume2,
-} from "lucide-react";
+import { BookOpen, ChevronUp, GraduationCap, Music2, User } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import type { BackendMessage, backendInterface } from "./backend.d";
-import { useActor } from "./hooks/useActor";
+import { useEffect, useRef, useState } from "react";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+type Mode = "student" | "teacher";
 
-type Screen = "room" | "lang" | "translator";
-type Language = "hindi" | "chinese";
+const lessons = [
+  {
+    letter: "A",
+    soundType: "Open vowel sound",
+    question:
+      "If the sound type is A (open vowel sound), how should I sing the starting line of a song?",
+    answer: "Use an open, bright tone with a relaxed mouth.",
+    example: "Ah\u2026 the sky is so wide, my heart wants to fly.",
+  },
+  {
+    letter: "B",
+    soundType: "Soft voiced consonant",
+    question: "How should the B sound be used in singing?",
+    answer: "Use a soft and warm voiced tone.",
+    example: "Baby don\u2019t worry, I\u2019m always here.",
+  },
+  {
+    letter: "C",
+    soundType: "C sharp sound",
+    question: "What tone suits the C sharp sound?",
+    answer: "Use a clear and energetic voice.",
+    example: "City lights shine as the morning begins.",
+  },
+  {
+    letter: "D",
+    soundType: "Deep consonant",
+    question: "How should a deep D sound be sung?",
+    answer: "Use a deeper and steady tone.",
+    example: "Dreams rise slowly from the ground.",
+  },
+  {
+    letter: "E",
+    soundType: "Light vowel",
+    question: "What tone should E light vowel use?",
+    answer: "Use a light and bright voice.",
+    example: "Every day brings a new hope.",
+  },
+  {
+    letter: "F",
+    soundType: "Air friction sound",
+    question: "How should F air friction sound be expressed?",
+    answer: "Add a little breath in the voice.",
+    example: "Feel the wind across my face.",
+  },
+  {
+    letter: "G",
+    soundType: "Strong consonant",
+    question: "How should the strong G sound be sung?",
+    answer: "Use a confident and powerful tone.",
+    example: "Glory waits beyond the road.",
+  },
+  {
+    letter: "H",
+    soundType: "Breath sound",
+    question: "What about the H breath sound?",
+    answer: "Use a soft breathy tone.",
+    example: "Hearts whisper in the night.",
+  },
+  {
+    letter: "I",
+    soundType: "Thin vowel",
+    question: "How should the thin I vowel sound be sung?",
+    answer: "Use a delicate and gentle tone.",
+    example: "I see your smile in the light.",
+  },
+  {
+    letter: "J",
+    soundType: "Rhythmic consonant",
+    question: "How should the J sound be expressed?",
+    answer: "Use a rhythmic and lively voice.",
+    example: "Joy is dancing in the air.",
+  },
+  {
+    letter: "K",
+    soundType: "Sharp consonant",
+    question: "How should the sharp K sound be sung?",
+    answer: "Use a clear and strong tone.",
+    example: "Keep running toward the light.",
+  },
+  {
+    letter: "L",
+    soundType: "Flowing consonant",
+    question: "What tone suits the flowing L sound?",
+    answer: "Use a smooth and flowing voice.",
+    example: "Love moves like a river.",
+  },
+  {
+    letter: "M",
+    soundType: "Nasal consonant",
+    question: "How should the nasal M sound be sung?",
+    answer: "Use a warm humming tone.",
+    example: "My dream stays close to me.",
+  },
+  {
+    letter: "N",
+    soundType: "Nasal resonance",
+    question: "How should the N nasal sound be sung?",
+    answer: "Use a soft nasal resonance.",
+    example: "Now the night feels calm.",
+  },
+  {
+    letter: "O",
+    soundType: "Round vowel",
+    question: "How should the round O vowel sound be sung?",
+    answer: "Use a round and full tone.",
+    example: "Oh the world is beautiful.",
+  },
+  {
+    letter: "P",
+    soundType: "Strong plosive",
+    question: "How should the strong P consonant be sung?",
+    answer: "Use a punchy and rhythmic tone.",
+    example: "Power runs through my veins.",
+  },
+  {
+    letter: "Q",
+    soundType: "Clear rounded sound",
+    question: "How should the Q sound be expressed?",
+    answer: "Use a clear and rounded tone.",
+    example: "Quiet morning shines again.",
+  },
+  {
+    letter: "R",
+    soundType: "Rolling consonant",
+    question: "How should the rolling R sound be sung?",
+    answer: "Use a rhythmic and vibrant tone.",
+    example: "Running toward the rising sun.",
+  },
+  {
+    letter: "S",
+    soundType: "Sharp sibilant",
+    question: "How should the sharp S sound be sung?",
+    answer: "Use a soft airy tone.",
+    example: "Stars are shining in the sky.",
+  },
+  {
+    letter: "T",
+    soundType: "Strong stop sound",
+    question: "How should the strong T stop sound be sung?",
+    answer: "Use a clear rhythmic attack.",
+    example: "Tonight we touch the stars.",
+  },
+  {
+    letter: "U",
+    soundType: "Deep vowel",
+    question: "How should the deep U vowel be sung?",
+    answer: "Use a deep rounded tone.",
+    example: "Under the moon we sing.",
+  },
+  {
+    letter: "V",
+    soundType: "Vibrating consonant",
+    question: "How should the vibrating V sound be sung?",
+    answer: "Use a smooth vibrating tone.",
+    example: "Voices rising in the wind.",
+  },
+  {
+    letter: "W",
+    soundType: "Glide consonant",
+    question: "How should the glide W sound be sung?",
+    answer: "Use a smooth flowing tone.",
+    example: "We walk into the dawn.",
+  },
+  {
+    letter: "X",
+    soundType: "Mixed sound",
+    question: "How should the mixed X sound be sung?",
+    answer: "Use a crisp energetic tone.",
+    example: "X-ray lights across the night.",
+  },
+  {
+    letter: "Y",
+    soundType: "Semi-vowel",
+    question: "How should the semi-vowel Y be sung?",
+    answer: "Use a gentle smooth tone.",
+    example: "You are the light I see.",
+  },
+  {
+    letter: "Z",
+    soundType: "Buzzing consonant",
+    question: "How should the buzzing Z sound be sung?",
+    answer: "Use a bright energetic tone.",
+    example: "Zoom into the shining sky.",
+  },
+];
 
-type HistoryItem = {
-  id: string;
-  speaker: "me" | "them";
-  original: string;
-  translated: string;
-  timestamp: number;
-};
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function getOrCreateDeviceId(): string {
-  const existing = localStorage.getItem("vormo_device_id");
-  if (existing) return existing;
-  const id = crypto.randomUUID();
-  localStorage.setItem("vormo_device_id", id);
-  return id;
-}
-
-function generateRoomCode(): string {
-  return Math.floor(1000 + Math.random() * 9000).toString();
-}
-
-async function translateText(
-  text: string,
-  from: string,
-  to: string,
-): Promise<string> {
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  return data.responseData?.translatedText ?? text;
-}
-
-function speakText(text: string, lang: string) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = lang;
-  utt.rate = 0.9;
-  window.speechSynthesis.speak(utt);
-}
-
-// ─── WaveformBars ─────────────────────────────────────────────────────────────
-
-function WaveformBars() {
-  return (
-    <div className="flex items-center gap-[3px] h-6">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="waveform-bar w-1 rounded-full bg-primary" />
-      ))}
-    </div>
-  );
-}
-
-// ─── App ──────────────────────────────────────────────────────────────────────
+const badgeHues = [
+  65, 45, 55, 35, 80, 170, 260, 50, 300, 130, 70, 195, 25, 220, 60, 150, 280,
+  40, 170, 55, 75, 250, 185, 30, 145, 200,
+];
 
 export default function App() {
-  const { actor: _actor, isFetching } = useActor();
-  const actor = _actor as unknown as backendInterface | null;
+  const [activeLetter, setActiveLetter] = useState("A");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [mode, setMode] = useState<Mode>("student");
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // ── Persistent IDs ──
-  const deviceId = useRef<string>(getOrCreateDeviceId());
-  const [generatedCode] = useState<string>(generateRoomCode);
-
-  // ── Screen state ──
-  const [screen, setScreen] = useState<Screen>("room");
-  const [roomCodeInput, setRoomCodeInput] = useState<string>("");
-  const [activeRoomId, setActiveRoomId] = useState<string>("");
-  const [language, setLanguage] = useState<Language | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  // ── Translator state ──
-  const [isListening, setIsListening] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [partnerMessage, setPartnerMessage] = useState<HistoryItem | null>(
-    null,
-  );
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-
-  // ── Refs ──
-  const lastTimestampRef = useRef<bigint>(BigInt(0));
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const micGrantedRef = useRef(false);
-
-  // ── Language mappings ──
-  const mySourceLang = language === "hindi" ? "hi-IN" : "zh-CN";
-  const translateFrom = language === "hindi" ? "hi" : "zh";
-  const translateTo = language === "hindi" ? "zh" : "hi";
-
-  // ── Copy room code ──
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedCode).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  // ── Room actions ──
-  const handleCreateRoom = () => {
-    if (!generatedCode) return;
-    setActiveRoomId(generatedCode);
-    setScreen("lang");
-  };
-
-  const handleJoinRoom = () => {
-    const code = roomCodeInput.trim();
-    if (!code || code.length < 4) {
-      toast.error("Please enter a valid 4-digit room code.");
-      return;
-    }
-    setActiveRoomId(code);
-    setScreen("lang");
-  };
-
-  // ── Mic permission ──
-  const requestMicPermission = async (): Promise<boolean> => {
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      micGrantedRef.current = true;
-      return true;
-    } catch {
-      micGrantedRef.current = false;
-      toast.error("Microphone permission denied. Please allow mic access.");
-      return false;
-    }
-  };
-
-  // ── Language selection ──
-  const handleSelectLanguage = async (lang: Language) => {
-    const granted = await requestMicPermission();
-    if (!granted) return;
-    setLanguage(lang);
-    setScreen("translator");
-  };
-
-  // ── Polling for partner messages ──
-  const pollMessages = useCallback(async () => {
-    if (!actor || !activeRoomId || !language) return;
-    try {
-      const msgs: BackendMessage[] = await actor.getMessages(
-        activeRoomId,
-        deviceId.current,
-        lastTimestampRef.current,
-      );
-      if (msgs.length === 0) return;
-
-      const sorted = [...msgs].sort((a, b) =>
-        a.timestamp < b.timestamp ? -1 : 1,
-      );
-      const latest = sorted[sorted.length - 1];
-      lastTimestampRef.current = latest.timestamp + BigInt(1);
-
-      for (const msg of sorted) {
-        const item: HistoryItem = {
-          id: `them-${msg.timestamp.toString()}`,
-          speaker: "them",
-          original: msg.sourceText,
-          translated: msg.translatedText,
-          timestamp: Number(msg.timestamp),
-        };
-        setHistory((prev) => {
-          if (prev.some((h) => h.id === item.id)) return prev;
-          return [item, ...prev].slice(0, 50);
-        });
-        setPartnerMessage(item);
-
-        // Determine what language to speak the translated text in
-        // Partner's sourceLang tells us what they spoke;
-        // their translatedText is already in OUR language
-        const speakLang = msg.sourceLang === "hi-IN" ? "zh-CN" : "hi-IN";
-        speakText(msg.translatedText, speakLang);
-      }
-    } catch {
-      // silent — network blip, retry next tick
-    }
-  }, [actor, activeRoomId, language]);
-
-  // Start / stop polling when entering/leaving translator screen
   useEffect(() => {
-    if (screen !== "translator" || !language || !activeRoomId) return;
-    lastTimestampRef.current = BigInt(0);
-    pollIntervalRef.current = setInterval(pollMessages, 1500);
+    const observers: IntersectionObserver[] = [];
+
+    for (let idx = 0; idx < lessons.length; idx++) {
+      const lesson = lessons[idx];
+      const el = cardRefs.current[idx];
+      if (!el) continue;
+      const obs = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              setActiveLetter(lesson.letter);
+            }
+          }
+        },
+        { rootMargin: "-40% 0px -40% 0px", threshold: 0 },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    }
+
     return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      for (const o of observers) o.disconnect();
     };
-  }, [screen, language, activeRoomId, pollMessages]);
+  }, []);
 
-  // ── Speech & send ──
-  const handleSpeak = () => {
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      return;
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 600);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollToLesson = (letter: string) => {
+    const idx = lessons.findIndex((l) => l.letter === letter);
+    const el = cardRefs.current[idx];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setActiveLetter(letter);
     }
-    if (!micGrantedRef.current) {
-      toast.error("Mic not available. Please reload and allow access.");
-      return;
-    }
-
-    const SpeechRecognitionAPI =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognitionAPI) {
-      toast.error("Speech recognition not supported. Use Chrome.");
-      return;
-    }
-
-    const recognition: SpeechRecognition = new SpeechRecognitionAPI();
-    recognition.lang = mySourceLang;
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognitionRef.current = recognition;
-
-    recognition.addEventListener("start", () => setIsListening(true));
-    recognition.onend = () => setIsListening(false);
-
-    recognition.onresult = async (e: SpeechRecognitionEvent) => {
-      const text = e.results[0][0].transcript;
-      if (!text.trim()) return;
-
-      setIsProcessing(true);
-      try {
-        const translated = await translateText(
-          text,
-          translateFrom,
-          translateTo,
-        );
-
-        const item: HistoryItem = {
-          id: `me-${Date.now()}`,
-          speaker: "me",
-          original: text,
-          translated,
-          timestamp: Date.now(),
-        };
-        setHistory((prev) => [item, ...prev].slice(0, 50));
-
-        if (actor) {
-          await actor.postMessage(
-            activeRoomId,
-            deviceId.current,
-            mySourceLang,
-            text,
-            translated,
-          );
-        }
-        // Do NOT speak own translation back to self
-      } catch {
-        toast.error("Translation failed. Check your connection.");
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-
-    recognition.onerror = (e: SpeechRecognitionErrorEvent) => {
-      if (e.error !== "aborted") toast.error(`Recognition error: ${e.error}`);
-      setIsListening(false);
-    };
-
-    // Synchronous start — no await before this
-    recognition.start();
   };
 
-  // ── Leave / reset ──
-  const handleLeave = () => {
-    recognitionRef.current?.stop();
-    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    micGrantedRef.current = false;
-    setScreen("room");
-    setLanguage(null);
-    setActiveRoomId("");
-    setRoomCodeInput("");
-    setIsListening(false);
-    setIsProcessing(false);
-    setHistory([]);
-    setPartnerMessage(null);
-    lastTimestampRef.current = BigInt(0);
-  };
+  const hue = badgeHues[lessons.findIndex((l) => l.letter === activeLetter)];
 
-  const isConnecting = isFetching;
-
-  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Toaster position="top-center" />
-
-      {/* ── Header ── */}
-      <header className="px-4 pt-6 pb-2 flex items-center justify-between max-w-md mx-auto w-full">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
-            <Volume2 className="w-4 h-4 text-primary" />
+    <div className="relative min-h-screen">
+      {/* Header */}
+      <header className="relative z-10 text-center px-4 pt-16 pb-10 overflow-hidden">
+        <div className="absolute inset-0 stave-lines opacity-40 pointer-events-none" />
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-48 rounded-full pointer-events-none"
+          style={{
+            background: `radial-gradient(ellipse, oklch(0.76 0.16 ${hue} / 0.12) 0%, transparent 70%)`,
+            transition: "background 0.8s ease",
+          }}
+        />
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="relative"
+        >
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <Music2 className="w-5 h-5 text-primary opacity-60" />
+            <span className="text-xs font-body tracking-[0.3em] uppercase text-muted-foreground">
+              Singing Vocal Guide
+            </span>
+            <Music2 className="w-5 h-5 text-primary opacity-60" />
           </div>
-          <span className="font-display text-lg font-bold tracking-tight text-foreground">
-            Vormo
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {screen === "translator" && activeRoomId && (
-            <Badge
-              variant="outline"
-              className="font-mono text-xs border-border text-muted-foreground"
+          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight">
+            <span
+              style={{
+                color: `oklch(0.88 0.12 ${hue})`,
+                transition: "color 0.8s ease",
+                textShadow: `0 0 40px oklch(0.76 0.16 ${hue} / 0.35)`,
+              }}
             >
-              Room {activeRoomId}
-            </Badge>
-          )}
-          {screen !== "room" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLeave}
-              data-ocid="translator.leave_button"
-              className="text-muted-foreground hover:text-foreground text-xs gap-1"
-            >
-              <LogOut className="w-3 h-3" />
-              Leave
-            </Button>
-          )}
-        </div>
+              A&#8211;Z
+            </span>
+            <span className="text-foreground"> Vocal</span>
+          </h1>
+          <p className="mt-3 text-muted-foreground font-body text-base sm:text-lg max-w-md mx-auto">
+            Learn how to sing every sound &#8212; a complete teacher-student
+            guide
+          </p>
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <div className="h-px flex-1 max-w-24 bg-gradient-to-r from-transparent to-border" />
+            <BookOpen className="w-4 h-4 text-primary opacity-50" />
+            <div className="h-px flex-1 max-w-24 bg-gradient-to-l from-transparent to-border" />
+          </div>
+        </motion.div>
       </header>
 
-      {/* ── Main ── */}
-      <main className="flex-1 flex flex-col items-center">
+      {/* Mode Toggle */}
+      <div className="relative z-10 flex justify-center px-4 pb-6">
+        <div
+          className="flex rounded-xl p-1 gap-1"
+          style={{
+            background: "oklch(0.13 0.022 35)",
+            border: "1px solid oklch(0.24 0.025 40)",
+            boxShadow: "0 4px 20px oklch(0 0 0 / 0.4)",
+          }}
+        >
+          <button
+            type="button"
+            data-ocid="mode.student.toggle"
+            onClick={() => setMode("student")}
+            className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-body font-semibold transition-all duration-200"
+            style={{
+              background:
+                mode === "student"
+                  ? "oklch(0.45 0.12 185 / 0.35)"
+                  : "transparent",
+              border:
+                mode === "student"
+                  ? "1px solid oklch(0.60 0.14 185 / 0.6)"
+                  : "1px solid transparent",
+              color:
+                mode === "student"
+                  ? "oklch(0.85 0.12 190)"
+                  : "oklch(0.50 0.015 60)",
+              boxShadow:
+                mode === "student"
+                  ? "0 0 16px oklch(0.55 0.14 185 / 0.3)"
+                  : "none",
+            }}
+          >
+            <User className="w-4 h-4" />
+            Student Mode
+          </button>
+          <button
+            type="button"
+            data-ocid="mode.teacher.toggle"
+            onClick={() => setMode("teacher")}
+            className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-body font-semibold transition-all duration-200"
+            style={{
+              background:
+                mode === "teacher"
+                  ? "oklch(0.50 0.16 65 / 0.35)"
+                  : "transparent",
+              border:
+                mode === "teacher"
+                  ? "1px solid oklch(0.72 0.18 65 / 0.6)"
+                  : "1px solid transparent",
+              color:
+                mode === "teacher"
+                  ? "oklch(0.88 0.14 65)"
+                  : "oklch(0.50 0.015 60)",
+              boxShadow:
+                mode === "teacher"
+                  ? "0 0 16px oklch(0.72 0.18 65 / 0.3)"
+                  : "none",
+            }}
+          >
+            <GraduationCap className="w-4 h-4" />
+            Teacher Mode
+          </button>
+        </div>
+      </div>
+
+      {/* Mode label */}
+      <div className="relative z-10 text-center mb-2 -mt-2">
         <AnimatePresence mode="wait">
-          {/* ════════ Screen 1 — Room Setup ════════ */}
-          {screen === "room" && (
-            <motion.div
-              key="room"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -24 }}
-              transition={{ duration: 0.35 }}
-              className="w-full max-w-sm px-6 pt-8 pb-4 flex flex-col gap-8"
-            >
-              <div className="text-center space-y-2">
-                <h1 className="font-display text-4xl font-bold text-foreground tracking-tight">
-                  Connect
-                </h1>
-                <p className="text-muted-foreground text-sm">
-                  Share your code or enter your partner's
-                </p>
-              </div>
+          <motion.p
+            key={mode}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.2 }}
+            className="text-xs font-body"
+            style={{
+              color:
+                mode === "student"
+                  ? "oklch(0.65 0.1 185)"
+                  : "oklch(0.72 0.14 65)",
+            }}
+          >
+            {mode === "student"
+              ? "🎤 Record your singing & hear the teacher's Riyaz"
+              : "👂 Hear student recordings & save your Riyaz demonstration"}
+          </motion.p>
+        </AnimatePresence>
+      </div>
 
-              {/* Generated room code display */}
-              <div className="rounded-2xl bg-card border border-border p-5 space-y-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
-                  Your Room Code
-                </p>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-5xl font-bold text-foreground tracking-widest flex-1">
-                    {generatedCode}
-                  </span>
-                  <button
-                    onClick={handleCopy}
-                    data-ocid="room.copy_button"
-                    className="w-10 h-10 rounded-xl bg-muted hover:bg-primary/20 border border-border hover:border-primary/40 flex items-center justify-center transition-all"
-                    type="button"
-                    aria-label="Copy room code"
-                  >
-                    {copied ? (
-                      <Check className="w-4 h-4 text-accent" />
-                    ) : (
-                      <Copy className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </div>
-                <p className="text-xs text-muted-foreground/60">
-                  Share this code with your partner
-                </p>
-                <Button
-                  onClick={handleCreateRoom}
-                  data-ocid="room.create_button"
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-semibold"
-                >
-                  Create Room
-                </Button>
-              </div>
-
-              {/* Divider */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground/50">
-                  or enter theirs
-                </span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-
-              {/* Join existing room */}
-              <div className="space-y-3">
-                <Input
-                  placeholder="Partner's 4-digit code"
-                  value={roomCodeInput}
-                  onChange={(e) =>
-                    setRoomCodeInput(
-                      e.target.value.replace(/\D/g, "").slice(0, 4),
-                    )
-                  }
-                  data-ocid="room.code_input"
-                  maxLength={4}
-                  inputMode="numeric"
-                  className="text-center font-mono text-2xl tracking-widest h-14 rounded-xl bg-card border-border focus:border-primary/50"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleJoinRoom();
-                  }}
-                />
-                <Button
-                  variant="outline"
-                  onClick={handleJoinRoom}
-                  data-ocid="room.join_button"
-                  className="w-full rounded-xl border-border hover:border-primary/40 hover:bg-primary/5 font-semibold"
-                >
-                  Join Room
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ════════ Screen 2 — Language Selection ════════ */}
-          {screen === "lang" && (
-            <motion.div
-              key="lang"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.35 }}
-              className="w-full max-w-sm px-6 pt-8 pb-4 flex flex-col gap-8"
-            >
-              <div className="flex flex-col items-center gap-3">
-                <Badge
-                  variant="outline"
-                  className="font-mono text-sm border-primary/30 text-primary bg-primary/10 px-4 py-1.5"
-                >
-                  Room {activeRoomId}
-                </Badge>
-                <h2 className="font-display text-3xl font-bold text-foreground tracking-tight text-center">
-                  Choose your language
-                </h2>
-                <p className="text-muted-foreground text-sm text-center">
-                  Which language will you speak?
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleSelectLanguage("hindi")}
-                  data-ocid="lang.hindi_button"
-                  className="w-full rounded-2xl bg-card border border-border hover:border-primary/50 hover:bg-primary/5 transition-all p-5 flex items-center gap-4 text-left"
-                >
-                  <span className="text-4xl">🇮🇳</span>
-                  <div>
-                    <div className="text-foreground font-semibold text-lg leading-tight">
-                      Hindi बोलूँगा
-                    </div>
-                    <div className="text-muted-foreground text-xs mt-0.5">
-                      I will speak Hindi → translated to Chinese
-                    </div>
-                  </div>
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleSelectLanguage("chinese")}
-                  data-ocid="lang.chinese_button"
-                  className="w-full rounded-2xl bg-card border border-border hover:border-accent/50 hover:bg-accent/5 transition-all p-5 flex items-center gap-4 text-left"
-                >
-                  <span className="text-4xl">🇨🇳</span>
-                  <div>
-                    <div className="text-foreground font-semibold text-lg leading-tight">
-                      Chinese 说
-                    </div>
-                    <div className="text-muted-foreground text-xs mt-0.5">
-                      I will speak Chinese → translated to Hindi
-                    </div>
-                  </div>
-                </motion.button>
-              </div>
-
-              <p className="text-xs text-muted-foreground/50 text-center">
-                Mic permission will be requested after your selection.
-              </p>
-            </motion.div>
-          )}
-
-          {/* ════════ Screen 3 — Translator ════════ */}
-          {screen === "translator" && language && (
-            <motion.div
-              key="translator"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.35 }}
-              className="w-full max-w-md px-4 pb-4 flex flex-col gap-4"
-            >
-              {/* Top badges */}
-              <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
-                <Badge
-                  variant="outline"
-                  className={`text-xs px-3 py-1 font-medium ${
-                    language === "hindi"
-                      ? "border-primary/40 text-primary bg-primary/10"
-                      : "border-accent/40 text-accent bg-accent/10"
-                  }`}
-                >
-                  {language === "hindi"
-                    ? "🇮🇳 Speaking Hindi"
-                    : "🇨🇳 Speaking Chinese"}
-                </Badge>
-                {isConnecting ? (
-                  <div
-                    data-ocid="translator.loading_state"
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground"
-                  >
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Connecting…
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                    Live
-                  </div>
-                )}
-              </div>
-
-              {/* Mic button */}
-              <div className="flex flex-col items-center justify-center py-6 gap-4">
-                <div className="relative">
-                  {isListening && (
-                    <>
-                      <span
-                        className="absolute inset-0 rounded-full"
-                        style={{
-                          animation: "pulse-ring 1.4s ease-out infinite",
-                          background: "oklch(var(--primary) / 0.2)",
-                        }}
-                      />
-                      <span
-                        className="absolute inset-0 rounded-full"
-                        style={{
-                          animation: "pulse-ring-2 1.4s ease-out 0.4s infinite",
-                          background: "oklch(var(--primary) / 0.12)",
-                        }}
-                      />
-                    </>
-                  )}
-                  <motion.button
-                    whileTap={{ scale: 0.93 }}
-                    onClick={handleSpeak}
-                    data-ocid="translator.speak_button"
-                    disabled={isProcessing || isConnecting}
-                    className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 shadow-glow ${
-                      isListening
-                        ? "bg-destructive text-destructive-foreground"
-                        : isProcessing
-                          ? "bg-muted text-muted-foreground"
-                          : "bg-primary text-primary-foreground hover:bg-primary/90"
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    aria-label={
-                      isListening ? "Stop listening" : "Start speaking"
-                    }
-                  >
-                    {isListening ? (
-                      <MicOff className="w-9 h-9" />
-                    ) : isProcessing ? (
-                      <Loader2 className="w-8 h-8 animate-spin" />
-                    ) : (
-                      <Mic className="w-9 h-9" />
-                    )}
-                  </motion.button>
-                </div>
-
-                <p className="text-xs text-muted-foreground">
-                  {isListening
-                    ? "Listening… tap to stop"
-                    : isProcessing
-                      ? "Translating…"
-                      : "Tap to speak"}
-                </p>
-
-                {isListening && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                  >
-                    <WaveformBars />
-                  </motion.div>
-                )}
-              </div>
-
-              {/* Partner message panel */}
-              <motion.div
-                data-ocid="translator.partner_panel"
-                className="rounded-2xl bg-card border border-border p-4 min-h-[72px]"
-                animate={{
-                  borderColor: partnerMessage
-                    ? "oklch(var(--primary) / 0.5)"
-                    : "oklch(var(--border))",
+      {/* Sticky Alphabet Grid */}
+      <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border/50 py-3 px-4 shadow-[0_4px_24px_oklch(0_0_0/0.4)]">
+        <div
+          data-ocid="alphabet.grid"
+          className="max-w-4xl mx-auto"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(13, minmax(0, 1fr))",
+            gap: "4px",
+          }}
+        >
+          {lessons.map((lesson, idx) => {
+            const isActive = activeLetter === lesson.letter;
+            const h = badgeHues[idx];
+            return (
+              <button
+                type="button"
+                key={lesson.letter}
+                data-ocid={`alphabet.letter.button.${idx + 1}`}
+                onClick={() => scrollToLesson(lesson.letter)}
+                className="flex items-center justify-center h-8 rounded-md text-sm font-bold font-display transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                style={{
+                  background: isActive
+                    ? `oklch(0.76 0.16 ${h} / 0.2)`
+                    : "transparent",
+                  color: isActive
+                    ? `oklch(0.88 0.14 ${h})`
+                    : "oklch(0.55 0.015 60)",
+                  border: isActive
+                    ? `1px solid oklch(0.76 0.16 ${h} / 0.5)`
+                    : "1px solid transparent",
+                  boxShadow: isActive
+                    ? `0 0 12px oklch(0.76 0.16 ${h} / 0.35)`
+                    : "none",
                 }}
               >
-                {partnerMessage ? (
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
-                      Partner said
-                    </p>
-                    <p className="text-foreground text-sm">
-                      {partnerMessage.original}
-                    </p>
-                    <p className="text-primary text-base font-semibold mt-1">
-                      {partnerMessage.translated}
+                {lesson.letter}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Lessons Grid */}
+      <main className="relative z-10 max-w-7xl mx-auto px-4 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {lessons.map((lesson, idx) => {
+            const h = badgeHues[idx];
+            return (
+              <motion.div
+                key={lesson.letter}
+                id={`lesson-${lesson.letter}`}
+                data-ocid={`lesson.card.${idx + 1}`}
+                ref={(el) => {
+                  cardRefs.current[idx] = el;
+                }}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.45, delay: (idx % 3) * 0.07 }}
+                className="lesson-card rounded-xl overflow-hidden"
+                style={{
+                  background: "oklch(0.13 0.022 35)",
+                  border: `1px solid oklch(0.76 0.16 ${h} / 0.18)`,
+                  boxShadow: "0 4px 20px oklch(0 0 0 / 0.45)",
+                }}
+              >
+                {/* Color bar */}
+                <div
+                  className="h-1 w-full"
+                  style={{
+                    background: `linear-gradient(to right, oklch(0.76 0.16 ${h} / 0.8), oklch(0.72 0.18 ${h + 20} / 0.3))`,
+                  }}
+                />
+
+                <div className="p-5">
+                  {/* Letter + sound type header */}
+                  <div className="flex items-start gap-4 mb-5">
+                    <div
+                      className="flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center font-display font-bold text-4xl"
+                      style={{
+                        background: `oklch(0.76 0.16 ${h} / 0.12)`,
+                        border: `2px solid oklch(0.76 0.16 ${h} / 0.45)`,
+                        color: `oklch(0.88 0.14 ${h})`,
+                        textShadow: `0 0 20px oklch(0.76 0.16 ${h} / 0.5)`,
+                      }}
+                    >
+                      {lesson.letter}
+                    </div>
+                    <div className="pt-1 min-w-0">
+                      <Badge
+                        className="text-xs font-body mb-1 border-0"
+                        style={{
+                          background: `oklch(0.76 0.16 ${h} / 0.15)`,
+                          color: `oklch(0.82 0.12 ${h})`,
+                        }}
+                      >
+                        {lesson.soundType}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground font-body">
+                        Lesson {idx + 1} of 26
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Student section */}
+                  <div
+                    className="rounded-lg p-3.5 mb-3"
+                    style={{
+                      background: "oklch(0.14 0.03 255 / 0.6)",
+                      border: "1px solid oklch(0.28 0.05 255 / 0.4)",
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: "oklch(0.45 0.08 255 / 0.4)" }}
+                      >
+                        <User
+                          className="w-3 h-3"
+                          style={{ color: "oklch(0.78 0.08 240)" }}
+                        />
+                      </div>
+                      <span
+                        className="text-xs font-bold tracking-wide uppercase font-body"
+                        style={{ color: "oklch(0.65 0.07 240)" }}
+                      >
+                        Student asks
+                      </span>
+                    </div>
+                    <p
+                      className="text-sm font-body leading-relaxed"
+                      style={{ color: "oklch(0.82 0.04 240)" }}
+                    >
+                      {lesson.question}
                     </p>
                   </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    Partner's translation will appear here…
-                  </p>
-                )}
-              </motion.div>
 
-              {/* Conversation history */}
-              <div className="flex-1 flex flex-col min-h-0">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">
-                  Conversation
-                </p>
-                <ScrollArea className="h-64 rounded-xl">
-                  <AnimatePresence initial={false}>
-                    {history.length === 0 ? (
-                      <motion.div
-                        key="empty"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        data-ocid="translator.empty_state"
-                        className="py-8 text-center text-muted-foreground/50 text-sm"
+                  {/* Teacher section */}
+                  <div
+                    className="rounded-lg p-3.5 mb-3"
+                    style={{
+                      background: "oklch(0.14 0.03 155 / 0.6)",
+                      border: "1px solid oklch(0.28 0.05 155 / 0.4)",
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: "oklch(0.45 0.08 155 / 0.4)" }}
                       >
-                        No messages yet. Start speaking!
-                      </motion.div>
-                    ) : (
-                      history.map((item, index) => (
-                        <motion.div
-                          key={item.id}
-                          initial={{
-                            opacity: 0,
-                            x: item.speaker === "me" ? 20 : -20,
-                          }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.25 }}
-                          data-ocid={`translator.item.${index + 1}`}
-                          className={`mb-3 flex ${
-                            item.speaker === "me"
-                              ? "justify-end"
-                              : "justify-start"
-                          }`}
-                        >
-                          <div
-                            className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                              item.speaker === "me"
-                                ? "bg-primary/20 border border-primary/30"
-                                : "bg-card border border-border"
-                            }`}
-                          >
-                            <p className="text-[10px] text-muted-foreground mb-1">
-                              {item.speaker === "me" ? "You" : "Partner"}
-                            </p>
-                            <p className="text-foreground text-sm">
-                              {item.original}
-                            </p>
-                            <p className="text-muted-foreground text-xs mt-1 font-medium">
-                              → {item.translated}
-                            </p>
-                          </div>
-                        </motion.div>
-                      ))
-                    )}
-                  </AnimatePresence>
-                </ScrollArea>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                        <GraduationCap
+                          className="w-3 h-3"
+                          style={{ color: "oklch(0.78 0.08 155)" }}
+                        />
+                      </div>
+                      <span
+                        className="text-xs font-bold tracking-wide uppercase font-body"
+                        style={{ color: "oklch(0.65 0.07 155)" }}
+                      >
+                        Teacher says
+                      </span>
+                    </div>
+                    <p
+                      className="text-sm font-body leading-relaxed"
+                      style={{ color: "oklch(0.82 0.04 160)" }}
+                    >
+                      {lesson.answer}
+                    </p>
+                  </div>
+
+                  {/* Song example */}
+                  <div
+                    className="rounded-lg px-4 py-3 flex items-start gap-3"
+                    style={{
+                      background: `oklch(0.76 0.16 ${h} / 0.07)`,
+                      border: `1px solid oklch(0.76 0.16 ${h} / 0.2)`,
+                    }}
+                  >
+                    <Music2
+                      className="w-4 h-4 mt-0.5 flex-shrink-0"
+                      style={{ color: `oklch(0.76 0.16 ${h} / 0.8)` }}
+                    />
+                    <p
+                      className="text-sm font-display italic leading-relaxed"
+                      style={{ color: `oklch(0.80 0.08 ${h})` }}
+                    >
+                      &ldquo;{lesson.example}&rdquo;
+                    </p>
+                  </div>
+
+                  {/* Riyaz Practice Panel */}
+                  <RiyazPanel
+                    letter={lesson.letter}
+                    hue={h}
+                    mode={mode}
+                    index={idx + 1}
+                  />
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </main>
 
-      {/* ── Footer ── */}
-      <footer className="py-4 text-center">
-        <p className="text-[11px] text-muted-foreground/40">
-          {"© "}
-          {new Date().getFullYear()}
-          {". Built with ♥ using "}
+      {/* Footer */}
+      <footer className="relative z-10 text-center py-8 border-t border-border/40 mt-6">
+        <p className="text-xs text-muted-foreground font-body">
+          &copy; {new Date().getFullYear()}. Built with love using{" "}
           <a
-            href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+            href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-muted-foreground/70 transition-colors"
+            className="text-primary hover:underline"
           >
             caffeine.ai
           </a>
         </p>
       </footer>
+
+      {/* Scroll to top */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            style={{
+              background: `oklch(0.76 0.16 ${hue} / 0.9)`,
+              boxShadow: `0 0 20px oklch(0.76 0.16 ${hue} / 0.4)`,
+              color: "oklch(0.08 0.01 65)",
+            }}
+          >
+            <ChevronUp className="w-5 h-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
